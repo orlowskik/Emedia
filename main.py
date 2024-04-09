@@ -7,6 +7,7 @@ def print_hi(name):
     x = PNG('files/plte.png')
     x.parse()
     x.describe()
+    x.show_image()
 
 
 if __name__ == '__main__':

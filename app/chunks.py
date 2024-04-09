@@ -11,7 +11,7 @@ class Chunk:
 
     def __str__(self):
         return f"Data of chunk {self.type}\n\n" \
-               f"Length: {int.from_bytes(self.length, 'big')}; Type: {self.type};\n Data: {self.data.hex(' ')};\n" \
+               f"Length: {int.from_bytes(self.length, 'big')}; Type: {self.type};\nData: {self.data.hex(' ')};\n" \
                f"CRC: {self.crc.hex(' ')}\n\n"
 
 
@@ -44,7 +44,7 @@ class IEND(Chunk):
         super().__init__(length, chunk_type, data, crc)
 
     def __str__(self):
-        data = f"The IEND chunk ends the file. Data field length:{int.from_bytes(self.length, 'big')}"
+        data = f"The IEND chunk ends the file. Data field length:{int.from_bytes(self.length, 'big')}\n"
         return super(IEND, self).__str__() + data
 
 
