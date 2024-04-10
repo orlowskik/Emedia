@@ -48,60 +48,69 @@ class Parser:
                 break
 
     def process_image(self):
-        color_type = {
-            0: 1,
-            2: 3,
-            3: 1,
-            4: 2,
-            6: 4
-        }
-        chunk_ihdr = self.png.chunks_critical.get(b'IHDR', None)
-        if chunk_ihdr is None:
-            raise ValueError("No IHDR chunk")
-        else:
-            pixel_size = color_type[chunk_ihdr.color]
-
-        width, height = chunk_ihdr.width, chunk_ihdr.height
-
         data = zlib.decompress(b''.join(chunk.data for chunk in self.png.chunks_IDAT))
-        data_proper_length = height * (1 + width * pixel_size)
+        data_proper_length = self.png.height * (1 + self.png.width * self.png.pixel_size)
         if data_proper_length != len(data):
             raise ValueError("Decompressed image data corrupted. Data length mismatch pixels.")
+        scanline = self.png.width * self.png.pixel_size
 
         def paeth():
-            abc = recon_a(), recon_b(), recon_c()
+            abc = [byte_a(), byte_b(), byte_c()]
             p = abc[0] + abc[1] - abc[2]
-            return abc[int(np.argmin([abs(p - abc[0]), abs(p - abc[1]), abs(p - abc[2])]))]
+            V = np.asarray([abs(p - bt) for bt in abc])
+            return abc[np.argmin(V)]
 
-        def recon_a():
-            return self.reconstructed_image[i * line_width + j - pixel_size] if j >= pixel_size else 0
+        def byte_a():
+            return self.reconstructed_image[i * scanline + j - self.png.pixel_size] if j >= self.png.pixel_size else 0
 
-        def recon_b():
-            return self.reconstructed_image[(i - 1) * line_width + j] if i > 0 else 0
+        def byte_b():
+            return self.reconstructed_image[(i - 1) * scanline + j] if i > 0 else 0
 
-        def recon_c():
-            return self.reconstructed_image[(i - 1) * line_width + j - pixel_size] if i > 0 and i >= pixel_size else 0
+        def byte_c():
+            return self.reconstructed_image[
+                (i - 1) * scanline + j - self.png.pixel_size] if i > 0 and j >= self.png.pixel_size else 0
 
-        line_width = width * pixel_size
-        for i in range(height):
-            base = i * (line_width + 1)
-            filter_type = data[base]
-            for j in range(line_width):
-                filt_x = data[base + j + 1]
+        n = 0
+        for i in range(self.png.height):
+            filter_type = data[n]
+            n += 1
+            for j in range(scanline):
+                tmp = data[n]
+                n += 1
                 match filter_type:
                     case 0:
-                        recon_x = filt_x
+                        pass
                     case 1:
-                        recon_x = filt_x + recon_a()
+                        tmp += byte_a()
                     case 2:
-                        recon_x = filt_x + recon_b()
+                        tmp += byte_b()
                     case 3:
-                        recon_x = filt_x + (recon_a() + recon_b()) // 2
+                        tmp += (byte_a() + byte_b()) // 2
                     case 4:
-                        recon_x = filt_x + paeth()
+                        tmp += paeth()
                     case _:
-                        raise Exception('unknown filter type: ' + str(filter_type))
-                self.reconstructed_image.append(recon_x & 0xff)  # truncation to byte
+                        raise TypeError('Unknown filter type: ' + str(filter_type))
+                self.reconstructed_image.append(tmp & 0xff)
 
-        plt.imshow(np.array(self.reconstructed_image).reshape((chunk_ihdr.height, chunk_ihdr.width, pixel_size)))
+    def print_image(self):
+        if self.reconstructed_image is None:
+            self.process_image()
+
+        if self.png.pixel_size == 1:
+            plt.imshow(np.array(self.reconstructed_image).reshape((self.png.height, self.png.width)),
+                       cmap='gray',
+                       vmin=0,
+                       vmax=255)
+        elif self.png.pixel_size == 2:
+            self.reconstructed_image = np.array(self.reconstructed_image).reshape(
+                (self.png.height, self.png.width, self.png.pixel_size))
+            grayscale = self.reconstructed_image[:, :, 0]
+            alpha = self.reconstructed_image[:, :, 1]
+            rgb_img = np.dstack((grayscale, grayscale, grayscale, alpha))
+            plt.imshow(rgb_img)
+        elif self.png.pixel_size in {3, 4}:
+            plt.imshow(
+                np.array(self.reconstructed_image).reshape((self.png.height, self.png.width, self.png.pixel_size)))
+        else:
+            raise ValueError(f'Number of pixels bytes must be in (1, 2, 3, 4), got {self.png.pixel_size}')
         plt.show()
