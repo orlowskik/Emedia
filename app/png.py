@@ -1,7 +1,6 @@
 from app.parser import Parser
 from app.chunks import IHDR
 
-
 class PNG:
 
     def __init__(self, filename=None):
@@ -66,3 +65,4 @@ class PNG:
 
     def __str__(self):
         return 'Returns a string representation of class'
+    
