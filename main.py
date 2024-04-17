@@ -3,15 +3,13 @@ from app.fourier import Fourier
 
 
 def print_hi(name):
-    x = PNG('files/dog_rgba.png')
+    x = PNG('files/linux.png')
     x.parse()
     x.describe()
-    x.show_image()
 
-    y = Fourier('files/dog_rgba.png')
-    y.transform()
-    y.show()
-    y.invert_and_show()
+    x.show_image()
+    x.show_spectrum()
+    x.show_revert_spectrum()
 
 
 if __name__ == '__main__':

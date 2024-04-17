@@ -7,6 +7,7 @@ class PNG:
 
     def __init__(self, filename=None):
         print(f'Opening {filename}')
+        self.filename = filename
 
         try:
             self.file = open(filename, 'rb')
@@ -15,6 +16,7 @@ class PNG:
             raise FileNotFoundError(f'Error opening {filename}: {e}')
 
         self.parser = None
+        self.fourier = None
 
         self.chunks_critical = {}
         self.chunks_ancillary = {}
@@ -66,5 +68,24 @@ class PNG:
         self.parser.process_image()
         self.parser.print_image()
 
+    def fourier_transform(self):
+        self.fourier = Fourier(self.filename)
+
+    def show_spectrum(self):
+        if self.fourier is None:
+            self.fourier_transform()
+
+        self.fourier.transform()
+        self.fourier.show()
+
+    def show_revert_spectrum(self):
+        if self.fourier is None:
+            self.fourier_transform()
+
+        if self.fourier.fft_shifted is None:
+            self.fourier.transform()
+
+        self.fourier.invert_and_show()
+
     def __str__(self):
-        return 'Returns a string representation of class'
+        return f'PNG file: {self.filename}.'
