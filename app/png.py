@@ -1,5 +1,7 @@
 from app.parser import Parser
 from app.chunks import IHDR
+from app.fourier import Fourier
+
 
 class PNG:
 
@@ -13,6 +15,7 @@ class PNG:
             raise FileNotFoundError(f'Error opening {filename}: {e}')
 
         self.parser = None
+
         self.chunks_critical = {}
         self.chunks_ancillary = {}
         self.chunks_IDAT = []
@@ -65,4 +68,3 @@ class PNG:
 
     def __str__(self):
         return 'Returns a string representation of class'
-    
