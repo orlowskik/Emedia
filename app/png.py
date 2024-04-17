@@ -1,6 +1,6 @@
 from app.parser import Parser
-from app.chunks import IHDR
 from app.fourier import Fourier
+from app.chunks import IEND
 
 
 class PNG:
@@ -102,6 +102,21 @@ class PNG:
             self.fourier.transform()
 
         self.fourier.invert_and_show()
+
+    def anonymize(self, filename):
+        basedir = 'anonymize/'
+
+        with open(basedir + filename, 'wb') as f:
+            f.write(self.parser.magic_number)
+            chunks = list(self.chunks_critical.values())
+            for idat in self.chunks_IDAT:
+                chunks.insert(-1, idat)
+            print(chunks)
+            for chunk in chunks:
+                f.write(chunk.length)
+                f.write(chunk.type)
+                f.write(chunk.data)
+                f.write(chunk.crc)
 
     def __str__(self):
         return f'PNG file: {self.filename}.'
