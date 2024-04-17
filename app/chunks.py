@@ -87,7 +87,7 @@ CRITICAL = {
     b'IHDR': IHDR,
     b'IEND': IEND,
     b'IDAT': IDAT,
-    b'PLTE': PLTE
+    b'PLTE': PLTE,
 }
 
 ANCILLARY = {

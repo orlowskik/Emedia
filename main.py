@@ -3,7 +3,7 @@ from app.fourier import Fourier
 
 
 def print_hi(name):
-    x = PNG('files/linux.png')
+    x = PNG('files/plte.png')
     x.parse()
     x.describe()
 

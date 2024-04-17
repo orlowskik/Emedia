@@ -27,8 +27,11 @@ class PNG:
         self.pixel_size = None
 
     def __del__(self):
-        if not self.file.closed:
-            self.file.close()
+        try:
+            if not self.file.closed:
+                self.file.close()
+        except (Exception, AttributeError):
+            pass
 
     def parse(self):
         self.parser = Parser(self)
@@ -62,10 +65,23 @@ class PNG:
             for chunk in self.chunks_ancillary.values():
                 print(chunk)
 
+    def process_image(self):
+        self.parser.process_image()
+
+        plte = self.chunks_critical.get(b'PLTE', None)
+        if plte:
+            palette = plte.create_palette()
+            self.parser.reconstructed_image = [pixel
+                                               for index in self.parser.reconstructed_image
+                                               for pixel in palette[index]]
+        self.pixel_size = 3
+
     def show_image(self):
         if self.parser is None:
             self.parse()
-        self.parser.process_image()
+        if len(self.parser.reconstructed_image) == 0:
+            self.process_image()
+
         self.parser.print_image()
 
     def fourier_transform(self):
