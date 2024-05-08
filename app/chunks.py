@@ -1,6 +1,5 @@
 import numpy as np
 
-
 class Chunk:
 
     def __init__(self, length, chunk_type, data, crc):
@@ -19,12 +18,18 @@ class IHDR(Chunk):
 
     def color_type_to_bytes(self):
         match self.color:
-            case 0: return 1
-            case 2: return 3
-            case 3: return 1
-            case 4: return 2
-            case 6: return 4
-            case _: return None
+            case 0:
+                return 1
+            case 2:
+                return 3
+            case 3:
+                return 1
+            case 4:
+                return 2
+            case 6:
+                return 4
+            case _:
+                return None
 
     def __init__(self, length, chunk_type, data, crc):
         super().__init__(length, chunk_type, data, crc)
@@ -83,6 +88,50 @@ class PLTE(Chunk):
         return [tuple(entry) for entry in decimal]
 
 
+class tIME(Chunk):
+    def __init__(self, length, chunk_type, data, crc):
+        super().__init__(length, chunk_type, data, crc)
+
+        self.year = int.from_bytes(self.data[:2], 'big')
+        self.month = self.data[2]
+        self.day = self.data[3]
+        self.hour = self.data[4]
+        self.min = self.data[5]
+        self.sec = self.data[6]
+
+    def __str__(self):
+        return super(tIME, self).__str__() + f'tIME modification time:{self.utc_time()}\n'
+
+    def utc_time(self):
+        month = self.month if int(self.month) > 9 else f'0{self.month}'
+        day = self.day if int(self.day) > 9 else f'0{self.day}'
+        hour = self.hour if int(self.hour) > 9 else f'0{self.hour}'
+        minute = self.min if int(self.min) > 9 else f'0{self.min}'
+        sec = self.sec if int(self.sec) > 9 else f'0{self.sec}'
+        return f'{self.year}-{month}-{day}T{hour}:{minute}:{sec}'
+
+
+class pHYs(Chunk):
+    def __init__(self, length, chunk_type, data, crc):
+        super().__init__(length, chunk_type, data, crc)
+
+        self.x_pixels = int.from_bytes(self.data[:4], 'big')
+        self.y_pixels = int.from_bytes(self.data[4:8], 'big')
+        self.unit = 'meters' if self.data[8] else 'undefined'
+
+    def __str__(self):
+        hdpi = 'unknown'
+        vdpi = 'unknown'
+        if self.unit == 'meters':
+            inch = 0.0254
+            hdpi = round(self.x_pixels * inch)
+            vdpi = round(self.y_pixels * inch)
+        return super(pHYs, self).__str__() + f'pHYs information:\n' \
+                                           + f'Horizontal: {self.x_pixels} pixels per unit (DPI: {hdpi})\n' \
+                                           + f'Vertical: {self.y_pixels} pixels per unit (DPI: {vdpi})\n' \
+                                           + f'Unit: {self.unit}\n'
+
+
 CRITICAL = {
     b'IHDR': IHDR,
     b'IEND': IEND,
@@ -91,5 +140,6 @@ CRITICAL = {
 }
 
 ANCILLARY = {
-
+    b'tIME': tIME,
+    b'pHYs': pHYs,
 }

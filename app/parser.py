@@ -42,7 +42,7 @@ class Parser:
                 else:
                     self.png.chunks_critical[chunk_type] = chunk
             elif chunk_type in ANCILLARY.keys():
-                self.png.chunks_ancillary.append(ANCILLARY[chunk_type](length, chunk_type, data, crc))
+                self.png.chunks_ancillary[chunk_type] = ANCILLARY[chunk_type](length, chunk_type, data, crc)
 
             if chunk_type == b'IEND':
                 break
