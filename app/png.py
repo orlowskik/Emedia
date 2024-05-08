@@ -21,6 +21,7 @@ class PNG:
         self.chunks_critical = {}
         self.chunks_ancillary = {}
         self.chunks_IDAT = []
+        self.chunks_tEXt = []
 
         self.width = None
         self.height = None
@@ -63,7 +64,12 @@ class PNG:
             print('None')
         else:
             for chunk in self.chunks_ancillary.values():
-                print(chunk)
+                if isinstance(chunk, list):
+                    print('tEXt chunks:\n')
+                    for index, text in enumerate(chunk):
+                        print(f'tEXt{index + 1}\n{text}')
+                else:
+                    print(chunk)
 
     def process_image(self):
         self.parser.process_image()

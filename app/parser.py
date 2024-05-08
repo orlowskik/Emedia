@@ -1,7 +1,7 @@
 import zlib
 import numpy as np
 import matplotlib.pyplot as plt
-from app.chunks import IDAT, CRITICAL, ANCILLARY
+from app.chunks import IDAT, CRITICAL, ANCILLARY, tEXt
 
 
 class Parser:
@@ -42,10 +42,16 @@ class Parser:
                 else:
                     self.png.chunks_critical[chunk_type] = chunk
             elif chunk_type in ANCILLARY.keys():
-                self.png.chunks_ancillary[chunk_type] = ANCILLARY[chunk_type](length, chunk_type, data, crc)
+                chunk = ANCILLARY[chunk_type](length, chunk_type, data, crc)
+                if isinstance(chunk, tEXt):
+                    self.png.chunks_tEXt.append(chunk)
+                else:
+                    self.png.chunks_ancillary[chunk_type] = chunk
 
             if chunk_type == b'IEND':
                 break
+        if len(self.png.chunks_tEXt) != 0:
+            self.png.chunks_ancillary[b'tEXT'] = self.png.chunks_tEXt
 
     def process_image(self):
         data = zlib.decompress(b''.join(chunk.data for chunk in self.png.chunks_IDAT))

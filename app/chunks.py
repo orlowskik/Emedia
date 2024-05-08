@@ -1,5 +1,6 @@
 import numpy as np
 
+
 class Chunk:
 
     def __init__(self, length, chunk_type, data, crc):
@@ -127,9 +128,22 @@ class pHYs(Chunk):
             hdpi = round(self.x_pixels * inch)
             vdpi = round(self.y_pixels * inch)
         return super(pHYs, self).__str__() + f'pHYs information:\n' \
-                                           + f'Horizontal: {self.x_pixels} pixels per unit (DPI: {hdpi})\n' \
-                                           + f'Vertical: {self.y_pixels} pixels per unit (DPI: {vdpi})\n' \
-                                           + f'Unit: {self.unit}\n'
+               + f'Horizontal: {self.x_pixels} pixels per unit (DPI: {hdpi})\n' \
+               + f'Vertical: {self.y_pixels} pixels per unit (DPI: {vdpi})\n' \
+               + f'Unit: {self.unit}\n'
+
+
+class tEXt(Chunk):
+
+    def __init__(self, length, chunk_type, data, crc):
+        super().__init__(length, chunk_type, data, crc)
+
+        self.sep_index = self.data.find(b'0')
+        self.keyword = self.data[:self.sep_index-1].decode('UTF-8')
+        self.text = self.data[self.sep_index+1:].decode('UTF-8')
+
+    def __str__(self):
+        return super(tEXt, self).__str__() + f'Keyword: {self.keyword}\nText: {self.text}\n'
 
 
 CRITICAL = {
@@ -142,4 +156,5 @@ CRITICAL = {
 ANCILLARY = {
     b'tIME': tIME,
     b'pHYs': pHYs,
+    b'tEXt': tEXt,
 }
