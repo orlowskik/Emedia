@@ -8,42 +8,42 @@ def show_menu():
     print("4. Show spectrum after Fourier transform")
     print("5. Inverse Fourier transform")
     print("6. ")
-    print("7. Wyjście")
+    print("7. Exit")
 
 def option_1():
-    print("You chose option number 1")
-    filename = input("Enter the file name \n")
+    print("You chose option number 1\n")
+    filename = input("Enter the file name ")
     x = PNG('files/' + filename)
     return x
 
 def option_2(x):
     if x != None:
-        print("You chose option number 2")
+        print("You chose option number 2\n")
         x.parse()
         x.describe()
     else:
-        print("\nYou must load the file first!\n")
+        print("\nYou must load the file first!")
 
 def option_3(x):
     if x != None:
-        print("You chose option number 3")
+        print("You chose option number 3\n")
         x.show_image()
     else:
-        print("\nYou must load the file first!\n")        
+        print("\nYou must load the file first!")        
 
 def option_4(x):
     if x != None:
-        print("You chose option number 4")
+        print("You chose option number 4\n")
         x.show_spectrum()
     else:
-        print("\nYou must load the file first!\n")  
+        print("\nYou must load the file first!")  
 
 def option_5(x):
     if x != None:
-        print("You chose option number 5")
+        print("You chose option number 5\n")
         x.show_revert_spectrum()
     else:
-        print("\nYou must load the file first!\n")  
+        print("\nYou must load the file first!")  
 
 def option_6(x):
     print("You chose option number 6")
