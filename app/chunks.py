@@ -1,5 +1,5 @@
 import numpy as np
-
+import zlib
 
 class Chunk:
 
@@ -146,6 +146,48 @@ class tEXt(Chunk):
         return super(tEXt, self).__str__() + f'Keyword: {self.keyword}\nText: {self.text}\n'
 
 
+class iTXt(Chunk):
+
+    def __init__(self, length, chunk_type, data, crc):
+        super().__init__(length, chunk_type, data, crc)
+
+        decoded_data = self.data.decode('utf')
+        sep_index1 = decoded_data.find('\x00')
+        sep_index2 = decoded_data.find('\x00', sep_index1 + 3)
+        sep_index3 = decoded_data.find('\x00', sep_index2 + 1)
+
+        self.sep_index1 = sep_index1
+        self.sep_index2 = sep_index2
+        self.sep_index3 = sep_index3
+
+        self.keyword = self.data[:sep_index1].decode('UTF-8')
+        self.compression = self.data[sep_index1 + 1]
+        self.comp_method = self.data[sep_index1 + 2]
+        self.language_tag = self.data[sep_index1 + 3:sep_index2 - 1].decode('ascii')
+        self.trans_keyword = self.data[sep_index2 + 1:sep_index3 - 1].decode('utf')
+
+        self.text = zlib.decompress(self.data[sep_index3 + 1:]) if self.compression else self.data[sep_index3 + 1:]
+        self.text = self.text.decode('utf')
+
+    def __str__(self):
+        return super(iTXt, self).__str__() + '\n' + self.show_data()
+
+    def show_data(self):
+        compression = str(self.compression)
+        compression += ' Compressed' if self.compression else ' Uncompressed'
+        method = str(self.comp_method)
+        method += ' zlib datastream with deflate' if self.compression else ' Uncompressed'
+        return f'Keyword: {self.keyword}\nCompression: {compression}, Compression method: {method}\n' \
+               f'Language tag: {self.language_tag}\nTranslated keyword: {self.trans_keyword}\nText:\n{self.text}\n'
+
+
+class XMP(iTXt):
+
+    def __init__(self, length, chunk_type, data, crc):
+        super().__init__(length, chunk_type, data, crc)
+
+
+
 CRITICAL = {
     b'IHDR': IHDR,
     b'IEND': IEND,
@@ -157,4 +199,5 @@ ANCILLARY = {
     b'tIME': tIME,
     b'pHYs': pHYs,
     b'tEXt': tEXt,
+    b'iTXt': iTXt,
 }
