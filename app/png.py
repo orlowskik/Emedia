@@ -80,7 +80,7 @@ class PNG:
             self.parser.reconstructed_image = [pixel
                                                for index in self.parser.reconstructed_image
                                                for pixel in palette[index]]
-        self.pixel_size = 3
+            self.pixel_size = 3
 
     def show_image(self):
         if self.parser is None:

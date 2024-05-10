@@ -1,5 +1,6 @@
 import numpy as np
 import zlib
+from libxmp import XMPFiles, consts
 
 class Chunk:
 
