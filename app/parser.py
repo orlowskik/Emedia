@@ -1,7 +1,7 @@
 import zlib
 import numpy as np
 import matplotlib.pyplot as plt
-from app.chunks import IDAT, CRITICAL, ANCILLARY, tEXt
+from app.chunks import IDAT, CRITICAL, ANCILLARY, tEXt, iTXt
 
 
 class Parser:
@@ -45,9 +45,12 @@ class Parser:
                 chunk = ANCILLARY[chunk_type](length, chunk_type, data, crc)
                 if isinstance(chunk, tEXt):
                     self.png.chunks_tEXt.append(chunk)
+                elif isinstance(chunk, iTXt):
+                    if chunk.keyword == 'XML:com.adobe.xmp':
+                        xmp = ANCILLARY[b'XMP'](length, chunk_type, data, crc, self.png.filename)
+                        self.png.chunks_ancillary[b'XMP'] = xmp
                 else:
                     self.png.chunks_ancillary[chunk_type] = chunk
-
             if chunk_type == b'IEND':
                 break
         if len(self.png.chunks_tEXt) != 0:
