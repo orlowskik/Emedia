@@ -203,6 +203,20 @@ class XMP(Chunk):
         return result
 
 
+class tRNS(Chunk):
+    def __init__(self, length, chunk_type, data, crc):
+        super().__init__(length, chunk_type, data, crc)
+
+        self.transparency = []
+        for byte in self.data:
+            self.transparency.append(byte)
+
+    def __str__(self):
+        return super(tRNS, self).__str__() + 'Transparency table:\n' + self.show_data() + '\n'
+
+    def show_data(self):
+        return self.transparency.__str__()
+
 CRITICAL = {
     b'IHDR': IHDR,
     b'IEND': IEND,
@@ -216,4 +230,6 @@ ANCILLARY = {
     b'tEXt': tEXt,
     b'iTXt': iTXt,
     b'XMP': XMP,
+    b'tRNS': tRNS,
+
 }

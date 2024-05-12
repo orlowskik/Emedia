@@ -106,10 +106,12 @@ class Parser:
             self.process_image()
 
         if self.png.pixel_size == 1:
+
             plt.imshow(np.array(self.reconstructed_image).reshape((self.png.height, self.png.width)),
                        cmap='gray',
                        vmin=0,
-                       vmax=255)
+                       vmax=255,
+                       alpha=self.png.alpha)
         elif self.png.pixel_size == 2:
             self.reconstructed_image = np.array(self.reconstructed_image).reshape(
                 (self.png.height, self.png.width, self.png.pixel_size))

@@ -1,7 +1,6 @@
 from app.parser import Parser
 from app.fourier import Fourier
-from app.chunks import IEND
-
+import numpy as np
 
 class PNG:
 
@@ -26,6 +25,7 @@ class PNG:
         self.width = None
         self.height = None
         self.pixel_size = None
+        self.alpha = None
 
     def __del__(self):
         try:
@@ -74,13 +74,34 @@ class PNG:
     def process_image(self):
         self.parser.process_image()
 
-        plte = self.chunks_critical.get(b'PLTE', None)
-        if plte:
-            palette = plte.create_palette()
-            self.parser.reconstructed_image = [pixel
-                                               for index in self.parser.reconstructed_image
-                                               for pixel in palette[index]]
-            self.pixel_size = 3
+        ihdr = self.chunks_critical.get(b'IHDR', None)
+        if not ihdr:
+            raise AttributeError('IHDR not found')
+
+        trns = self.chunks_ancillary.get(b'tRNS', None)
+        match ihdr.color:
+            case 0:
+                if trns:
+                    self.alpha = [1] * len(self.parser.reconstructed_image)
+                    for i in range(len(self.alpha)):
+                        if self.parser.reconstructed_image[i] == trns.transparency[0]:
+                            self.alpha[i] = 0
+            case 3:
+                plte = self.chunks_critical.get(b'PLTE', None)
+                if plte:
+                    palette = plte.create_palette()
+                    if trns:
+                        size = len(palette) - len(trns.transparency)
+                        trns.transparency.extend([255] * size )
+                        for i in range(len(palette)):
+                            palette[i] += (trns.transparency[i],)
+                        print(palette)
+                    self.parser.reconstructed_image = [pixel
+                                                       for index in self.parser.reconstructed_image
+                                                       for pixel in palette[index]]
+                    self.pixel_size = 4 if trns else 3
+
+
 
     def show_image(self):
         if self.parser is None:
