@@ -29,6 +29,7 @@ class Parser:
 
     def find_chunks(self):
         self.png.file.seek(len(self.magic_number))
+        n = 0
         while True:
             length = self.png.file.read(self.CHUNK_BASE_LENGTH)
             chunk_type = self.png.file.read(self.CHUNK_BASE_LENGTH)

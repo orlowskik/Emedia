@@ -1,6 +1,8 @@
 from app.parser import Parser
 from app.fourier import Fourier
+from app.chunks import IDAT
 import numpy as np
+
 
 class PNG:
 
@@ -130,15 +132,36 @@ class PNG:
 
         self.fourier.invert_and_show()
 
-    def anonymize(self, filename):
-        basedir = 'anonymize/'
+    def resize_data(self, slices, chunks):
+        data = b''
+        for idat in self.chunks_IDAT:
+            data += idat.data
+        slice_len = len(data) // slices
+        if slice_len == 0:
+            raise ValueError(f'Number of slices greater than number of bytes. Data length: {len(data)}')
+        rest = len(data) % slices
+        slice_last = len(data) - slice_len * (slices - 1) if rest else slice_len
 
-        with open(basedir + filename, 'wb') as f:
+        length = slice_len.to_bytes(length=4)
+        for i in range(slices):
+            if i == slices - 1:
+                data_slice = data[slice_len * i:slice_len * i + slice_last]
+                length = slice_last.to_bytes(length=4)
+            else:
+                data_slice = data[slice_len * i:slice_len * i + slice_len]
+            idat = IDAT(length, b'IDAT', data_slice, self.chunks_IDAT[0].crc)
+            chunks.insert(-1, idat)
+
+    def anonymize(self, filename, slices=1):
+        basedir = 'anonymized/'
+
+        if self.parser is None:
+            self.parse()
+
+        with open(basedir + filename + '.png', 'wb') as f:
             f.write(self.parser.magic_number)
             chunks = list(self.chunks_critical.values())
-            for idat in self.chunks_IDAT:
-                chunks.insert(-1, idat)
-            print(chunks)
+            self.resize_data(slices, chunks)
             for chunk in chunks:
                 f.write(chunk.length)
                 f.write(chunk.type)

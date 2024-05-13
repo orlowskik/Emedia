@@ -1,5 +1,6 @@
 from app.png import PNG
 
+
 def show_menu():
     print("\nChoose an option:")
     print("1. Load an image")
@@ -7,46 +8,65 @@ def show_menu():
     print("3. Show image")
     print("4. Show spectrum after Fourier transform")
     print("5. Inverse Fourier transform")
-    print("6. ")
+    print("6. Anonymize image")
     print("7. Exit")
+
 
 def option_1():
     print("You chose option number 1\n")
     filename = input("Enter the file name ")
-    x = PNG('files/' + filename)
+    try:
+        x = PNG(filename)
+    except FileNotFoundError:
+        print(f"Error: file {filename} not found.")
+        return None if input("Try again? [Y/n] : ") == 'n' else option_1()
     return x
 
+
 def option_2(x):
-    if x != None:
+    if x is not None:
         print("You chose option number 2\n")
         x.parse()
         x.describe()
     else:
         print("\nYou must load the file first!")
 
+
 def option_3(x):
-    if x != None:
+    if x is not None:
         print("You chose option number 3\n")
         x.show_image()
     else:
-        print("\nYou must load the file first!")        
+        print("\nYou must load the file first!")
+
 
 def option_4(x):
-    if x != None:
+    if x is not None:
         print("You chose option number 4\n")
         x.show_spectrum()
     else:
-        print("\nYou must load the file first!")  
+        print("\nYou must load the file first!")
+
 
 def option_5(x):
-    if x != None:
+    if x is not None:
         print("You chose option number 5\n")
         x.show_revert_spectrum()
     else:
-        print("\nYou must load the file first!")  
+        print("\nYou must load the file first!")
+
 
 def option_6(x):
-    print("You chose option number 6")
+    if x is not None:
+        print("You chose option number 6")
+        filename = input('Anonymized file name (in ./anonymized folder) without extension: ')
+        if filename is not None:
+            slices = int(input('How many IDAT files should be considered? (default: 1) '))
+            try:
+                x.anonymize(filename, slices)
+            except Exception as e:
+                print(f'Exception occurred: {e}')
+                print("File not anonymized due to error. Returning to the menu\n")
 
 
 def main():
@@ -72,6 +92,7 @@ def main():
             break
         else:
             print("Wrong number. You must choose the number between 1 and 7")
+
 
 if __name__ == "__main__":
     main()
