@@ -61,11 +61,14 @@ def option_6(x):
         print("You chose option number 6")
         filename = input('Anonymized file name (in ./anonymized folder) without extension: ')
         if filename is not None:
-            slices = int(input('How many IDAT files should be considered? (default: 1) '))
             try:
-                x.anonymize(filename, slices)
+                n = input('How many IDAT files should be considered? (default: 1) ')
+                t = input('Preserve transparency if tRNS present? (default: False) [0 - False, 1 - True] ')
+                slices = 1 if n == '' else int(n)
+                trans = False if t == '' else bool(t)
+                x.anonymize(filename, slices, trans)
             except Exception as e:
-                print(f'Exception occurred: {e}')
+                print(f'Error occurred: {e}')
                 print("File not anonymized due to error. Returning to the menu\n")
 
 

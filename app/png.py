@@ -103,8 +103,6 @@ class PNG:
                                                        for pixel in palette[index]]
                     self.pixel_size = 4 if trns else 3
 
-
-
     def show_image(self):
         if self.parser is None:
             self.parse()
@@ -152,7 +150,7 @@ class PNG:
             idat = IDAT(length, b'IDAT', data_slice, self.chunks_IDAT[0].crc)
             chunks.insert(-1, idat)
 
-    def anonymize(self, filename, slices=1):
+    def anonymize(self, filename, slices=1, transparent=False):
         basedir = 'anonymized/'
 
         if self.parser is None:
@@ -161,6 +159,8 @@ class PNG:
         with open(basedir + filename + '.png', 'wb') as f:
             f.write(self.parser.magic_number)
             chunks = list(self.chunks_critical.values())
+            if (trns := self.chunks_ancillary.get(b'tRNS', None)) and transparent:
+                chunks.insert(-1, trns)
             self.resize_data(slices, chunks)
             for chunk in chunks:
                 f.write(chunk.length)
