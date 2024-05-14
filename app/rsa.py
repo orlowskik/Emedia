@@ -1,57 +1,52 @@
 from sympy import randprime, isprime, mod_inverse
 from random import randint
 from math import gcd
-from egcd import egcd
 import numpy as np
 import time
 
 
-def findModInverse(a, m):
-    # Returns the modular inverse of a % m, which is
-    # the number x such that a*x % m = 1
+class RSA:
 
-    if gcd(a, m) != 1:
-        return None  # no mod inverse if a & m aren't coprime
+    def __init__(self):
+        self.private_key = None
+        self.public_key = None
+        self.key_length = None
 
-    # Calculate using the Extended Euclidean Algorithm:
-    u1, u2, u3 = 1, 0, a
-    v1, v2, v3 = 0, 1, m
-    while v3 != 0:
-        q = u3 // v3  # // is the integer division operator
-        v1, v2, v3, u1, u2, u3 = (u1 - q * v1), (u2 - q * v2), (u3 - q * v3), v1, v2, v3
-    return u1 % m
+    def generate_keys(self, size=2048, common_e=True, min_e=None):
+        p = q = 1
+        prime_size = size // 2
+        while p == q or ((n := p * q).bit_length() != size):
+            p = randprime(2 ** (prime_size - 1), 2 ** (prime_size - 0.7))
+            q = randprime(2 ** (prime_size - 0.3), 2 ** prime_size)
+        min_e = 2 ** (prime_size // 2) if min_e is None else min_e
+        phi = (p - 1) * (q - 1)
 
+        if min_e < 3 or min_e > phi - 1:
+            raise ValueError("min_e must be greater than 3 and smaller than phi.\n")
 
-def generate_keys(p=None, q=None, common_e=True, min_e=None):
-    if p is None or q is None:
-        p = randprime(2 ** 512, 2 ** 1024)
-        q = randprime(p, p * (2 ** 100))
-    if not isprime(p) or not isprime(q) or p == q:
-        raise ValueError("p and q must be distinct prime numbers.\n")
-    min_e = 3 if min_e is None else min_e
-
-    n = p * q
-    phi = (p - 1) * (q - 1)
-
-    if min_e < 3 or min_e > phi - 1:
-        raise ValueError("min_e must be greater than 3 and smaller than phi.\n")
-
-    e = 2 ** 16 + 1 if common_e else randint(3, phi - 1)
-    g = gcd(e, phi)
-    while g != 1 or e > phi or i > 100000000:
-        e = randint(3, phi - 1)
+        e = 2 ** 16 + 1 if common_e else randint(min_e, phi - 1)
         g = gcd(e, phi)
-    d = mod_inverse(e, phi)
-    return (n, e), (n, d)
+        while g != 1 or e > phi or i > 100:
+            e = randint(min_e, phi - 1)
+            g = gcd(e, phi)
+        if i > 100:
+            raise ValueError(
+                f"Exceeded allowed iterations while searching for e. Use lower min_e value - currently {min_e}\n")
+        # d = mod_inverse(e, phi)
+        d = pow(e, -1, phi)
+        self.public_key = (n, e)
+        self.private_key = (n, d)
+        self.key_length = size
+        return self.public_key, self.private_key
 
 
 times = []
 failures = 0
-for i in range(1000):
+rsa = RSA()
+for i in range(2):
     start = time.time()
-    public, private = generate_keys(common_e=False)
+    public, private = rsa.generate_keys(common_e=False)
     times.append(time.time() - start)
     if private[-1] < 0:
         failures += 1
-    print(i)
 print(failures, '\n', np.average(times))
