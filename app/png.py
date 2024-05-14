@@ -97,11 +97,13 @@ class PNG:
                         trns.transparency.extend([255] * size )
                         for i in range(len(palette)):
                             palette[i] += (trns.transparency[i],)
-                        print(palette)
                     self.parser.reconstructed_image = [pixel
                                                        for index in self.parser.reconstructed_image
                                                        for pixel in palette[index]]
                     self.pixel_size = 4 if trns else 3
+        with open('test.txt', 'w') as f:
+            for pix in self.parser.reconstructed_image:
+                f.write(str(pix) + '\n')
 
     def show_image(self):
         if self.parser is None:
