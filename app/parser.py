@@ -1,7 +1,7 @@
 import zlib
 import numpy as np
 import matplotlib.pyplot as plt
-from app.chunks import IDAT, CRITICAL, ANCILLARY, tEXt
+from app.chunks import IDAT, CRITICAL, ANCILLARY, tEXt, iTXt
 
 
 class Parser:
@@ -29,6 +29,7 @@ class Parser:
 
     def find_chunks(self):
         self.png.file.seek(len(self.magic_number))
+        n = 0
         while True:
             length = self.png.file.read(self.CHUNK_BASE_LENGTH)
             chunk_type = self.png.file.read(self.CHUNK_BASE_LENGTH)
@@ -45,9 +46,12 @@ class Parser:
                 chunk = ANCILLARY[chunk_type](length, chunk_type, data, crc)
                 if isinstance(chunk, tEXt):
                     self.png.chunks_tEXt.append(chunk)
+                elif isinstance(chunk, iTXt):
+                    if chunk.keyword == 'XML:com.adobe.xmp':
+                        xmp = ANCILLARY[b'XMP'](length, chunk_type, data, crc, self.png.filename)
+                        self.png.chunks_ancillary[b'XMP'] = xmp
                 else:
                     self.png.chunks_ancillary[chunk_type] = chunk
-
             if chunk_type == b'IEND':
                 break
         if len(self.png.chunks_tEXt) != 0:
@@ -103,10 +107,12 @@ class Parser:
             self.process_image()
 
         if self.png.pixel_size == 1:
+
             plt.imshow(np.array(self.reconstructed_image).reshape((self.png.height, self.png.width)),
                        cmap='gray',
                        vmin=0,
-                       vmax=255)
+                       vmax=255,
+                       alpha=self.png.alpha)
         elif self.png.pixel_size == 2:
             self.reconstructed_image = np.array(self.reconstructed_image).reshape(
                 (self.png.height, self.png.width, self.png.pixel_size))

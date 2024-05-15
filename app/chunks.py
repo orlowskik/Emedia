@@ -1,5 +1,7 @@
 import numpy as np
 import zlib
+from libxmp import XMPFiles, consts
+from libxmp.utils import object_to_dict
 
 class Chunk:
 
@@ -181,12 +183,39 @@ class iTXt(Chunk):
                f'Language tag: {self.language_tag}\nTranslated keyword: {self.trans_keyword}\nText:\n{self.text}\n'
 
 
-class XMP(iTXt):
+class XMP(Chunk):
 
+    def __init__(self, length, chunk_type, data, crc, filename):
+        super().__init__(length, chunk_type, data, crc)
+
+        self.xmpfile = XMPFiles(file_path=filename, open_forupdate=False)
+        self.xmp = self.xmpfile.get_xmp()
+
+    def __str__(self):
+        return super(XMP, self).__str__() + "This chunk includes XMP data:" + '\n\n' + self.show_data() + '\n'
+
+    def show_data(self):
+        result = ''
+        xmp = object_to_dict(self.xmp)
+        for key in xmp.keys():
+            for prop in xmp[key]:
+                result += prop[0] + ': ' + prop[1] + '\n'
+        return result
+
+
+class tRNS(Chunk):
     def __init__(self, length, chunk_type, data, crc):
         super().__init__(length, chunk_type, data, crc)
 
+        self.transparency = []
+        for byte in self.data:
+            self.transparency.append(byte)
 
+    def __str__(self):
+        return super(tRNS, self).__str__() + 'Transparency table:\n' + self.show_data() + '\n'
+
+    def show_data(self):
+        return self.transparency.__str__()
 
 CRITICAL = {
     b'IHDR': IHDR,
@@ -200,4 +229,7 @@ ANCILLARY = {
     b'pHYs': pHYs,
     b'tEXt': tEXt,
     b'iTXt': iTXt,
+    b'XMP': XMP,
+    b'tRNS': tRNS,
+
 }
