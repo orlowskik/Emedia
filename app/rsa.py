@@ -7,12 +7,16 @@ import time
 
 class RSA:
 
-    def __init__(self):
-        self.private_key = None
-        self.public_key = None
-        self.key_length = None
+    def __init__(self, private_key=None, public_key=None):
+        self.private_key = private_key
+        self.public_key = public_key
 
-        self.block_bytes_size = None
+        if self.public_key is not None:
+            self.key_length = public_key[0].bit_length()
+            self.block_bytes_size = self.key_length // 8 - 1
+        else:
+            self.key_length = None
+            self.block_bytes_size = None
 
     def generate_keys(self, size=2048, common_e=True, min_e=None):
         p = q = 1
@@ -47,39 +51,18 @@ class RSA:
 
     def encrypt_ECB(self, data):
         original_len = len(data)
-        print(original_len)
-        print(self.block_bytes_size)
-        print(original_len / self.block_bytes_size)
         ciphertext = []
-        z = 1
+        extended_bytes = []
         for i in range(0, original_len, self.block_bytes_size):
             block = bytes(data[i:i + self.block_bytes_size])
-            # if len(block) < self.block_bytes_size:
-            #     block += b'\x00' * (self.block_bytes_size - len(block))
-            chunk_to_encrypt_hex = bytes(data[i: i + self.block_bytes_size])
-            cipher_int = pow(int.from_bytes(chunk_to_encrypt_hex, 'big'), self.public_key[1], self.public_key[0])
-            cipher_hex = cipher_int.to_bytes(self.block_bytes_size + 1, 'big')
+            cipher = pow(int.from_bytes(block, 'big'),
+                             self.public_key[1],
+                             self.public_key[0]).to_bytes(self.block_bytes_size + 1, 'big')
 
             for x in range(self.block_bytes_size):
-                ciphertext.append(cipher_hex[x])
-            # ciphertext.append(cip.to_bytes(self.block_bytes_size, 'big'))
-
-            z += 1
-
-
-times = []
-data = []
-failures = 0
-rsa = RSA()
-with open('test.txt', 'r') as f:
-    for line in f.readlines():
-        data.append(int(line))
-
-for n in range(1):
-    start = time.time()
-    public, private = rsa.generate_keys(common_e=False)
-    rsa.encrypt_ECB(data)
-    times.append(time.time() - start)
-    if private[-1] < 0:
-        failures += 1
-print(failures, '\n', np.average(times))
+                ciphertext.append(cipher[x])
+            extended_bytes.append(cipher[-1])
+        for x in ciphertext[original_len:]:
+            extended_bytes.append(x)
+        ciphertext = ciphertext[:original_len]
+        return ciphertext, extended_bytes

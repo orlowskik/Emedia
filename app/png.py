@@ -1,7 +1,11 @@
+import zlib
+
 from app.parser import Parser
 from app.fourier import Fourier
-from app.chunks import IDAT
+from app.chunks import IDAT, tEXt
+from app.rsa import RSA
 import numpy as np
+import secrets
 
 
 class PNG:
@@ -18,6 +22,7 @@ class PNG:
 
         self.parser = None
         self.fourier = None
+        self.processed = False
 
         self.chunks_critical = {}
         self.chunks_ancillary = {}
@@ -74,6 +79,8 @@ class PNG:
                     print(chunk)
 
     def process_image(self):
+        if self.processed:
+            return
         self.parser.process_image()
 
         ihdr = self.chunks_critical.get(b'IHDR', None)
@@ -101,9 +108,7 @@ class PNG:
                                                        for index in self.parser.reconstructed_image
                                                        for pixel in palette[index]]
                     self.pixel_size = 4 if trns else 3
-        with open('test.txt', 'w') as f:
-            for pix in self.parser.reconstructed_image:
-                f.write(str(pix) + '\n')
+        self.processed = True
 
     def show_image(self):
         if self.parser is None:
@@ -132,24 +137,21 @@ class PNG:
 
         self.fourier.invert_and_show()
 
-    def resize_data(self, slices, chunks):
-        data = b''
-        for idat in self.chunks_IDAT:
-            data += idat.data
+    def resize_data(self, slices, chunks, data):
         slice_len = len(data) // slices
         if slice_len == 0:
             raise ValueError(f'Number of slices greater than number of bytes. Data length: {len(data)}')
         rest = len(data) % slices
         slice_last = len(data) - slice_len * (slices - 1) if rest else slice_len
 
-        length = slice_len.to_bytes(length=4)
+        length = slice_len.to_bytes(length=4, byteorder='big')
         for i in range(slices):
             if i == slices - 1:
                 data_slice = data[slice_len * i:slice_len * i + slice_last]
-                length = slice_last.to_bytes(length=4)
+                length = slice_last.to_bytes(length=4, byteorder='big')
             else:
                 data_slice = data[slice_len * i:slice_len * i + slice_len]
-            idat = IDAT(length, b'IDAT', data_slice, self.chunks_IDAT[0].crc)
+            idat = IDAT(length, b'IDAT', data_slice, secrets.token_bytes(4))
             chunks.insert(-1, idat)
 
     def anonymize(self, filename, slices=1, transparent=False):
@@ -163,12 +165,61 @@ class PNG:
             chunks = list(self.chunks_critical.values())
             if (trns := self.chunks_ancillary.get(b'tRNS', None)) and transparent:
                 chunks.insert(-1, trns)
-            self.resize_data(slices, chunks)
+            data = b''
+            for idat in self.chunks_IDAT:
+                data += idat.data
+            self.resize_data(slices, chunks, data)
             for chunk in chunks:
                 f.write(chunk.length)
                 f.write(chunk.type)
                 f.write(chunk.data)
                 f.write(chunk.crc)
+
+
+
+    def encrypt_ECB(self, filename, public_key=None, private_key=None):
+        basedir = 'crypto/'
+
+        if public_key is None:
+            rsa = RSA()
+            rsa.generate_keys(common_e=True)
+        else:
+            rsa = RSA(public_key, private_key)
+
+        if self.parser is None:
+            self.parse()
+
+        if not self.processed:
+            self.process_image()
+
+        chunks = list(self.chunks_critical.values())
+        slices = len(self.chunks_IDAT)
+        cipher, extended = rsa.encrypt_ECB(self.parser.reconstructed_image)
+        for i in range(self.height):
+            cipher.insert(i*self.width*self.pixel_size, 0)
+        compressed = zlib.compress(bytes(cipher))
+
+
+        for anc in self.chunks_ancillary.values():
+            if not isinstance(anc, list):
+                chunks.insert(-1, anc)
+        self.resize_data(slices, chunks, compressed)
+        for txt in self.chunks_tEXt:
+            chunks.insert(-1, txt)
+
+        keyword = 'EXTENSION'.encode('utf-8')
+        data = keyword + b'\x00' + bytes(extended)
+        # ext_data = tEXt(len(data).to_bytes(4,'big'), b'tEXt', data, secrets.token_bytes(4))
+        # chunks.insert(-1, ext_data)
+
+        with open(basedir + filename + '.png', 'wb') as f:
+            f.write(self.parser.magic_number)
+            for chunk in chunks:
+                f.write(chunk.length)
+                f.write(chunk.type)
+                f.write(chunk.data)
+                f.write(chunk.crc)
+
 
     def __str__(self):
         return f'PNG file: {self.filename}.'

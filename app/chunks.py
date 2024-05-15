@@ -1,7 +1,7 @@
 import numpy as np
 import zlib
-# from libxmp import XMPFiles, consts
-# from libxmp.utils import object_to_dict
+from libxmp import XMPFiles, consts
+from libxmp.utils import object_to_dict
 
 class Chunk:
 

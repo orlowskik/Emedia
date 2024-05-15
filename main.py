@@ -9,7 +9,8 @@ def show_menu():
     print("4. Show spectrum after Fourier transform")
     print("5. Inverse Fourier transform")
     print("6. Anonymize image")
-    print("7. Exit")
+    print("7. Encrypt ECB")
+    print("8. Exit")
 
 
 def option_1():
@@ -72,6 +73,14 @@ def option_6(x):
                 print("File not anonymized due to error. Returning to the menu\n")
 
 
+def option_7(x):
+    if x is not None:
+        print("You chose option number 7")
+        # filename = input('Encrypted file name (in ./anonymized folder) without extension: ')
+        # if filename is not None:
+        filename = 'test'
+        x.encrypt_ECB(filename)
+
 def main():
     x = None
     while True:
@@ -91,6 +100,8 @@ def main():
         elif wybor == "6":
             option_6(x)
         elif wybor == "7":
+            option_7(x)
+        elif wybor == "8":
             print("Exiting.")
             break
         else:
