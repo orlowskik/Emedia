@@ -14,7 +14,6 @@ class RSA:
 
         self.block_bytes_size = None
 
-
     def generate_keys(self, size=2048, common_e=True, min_e=None):
         p = q = 1
         prime_size = size // 2
