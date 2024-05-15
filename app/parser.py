@@ -63,7 +63,6 @@ class Parser:
         if data_proper_length != len(data):
             raise ValueError("Decompressed image data corrupted. Data length mismatch pixels.")
         scanline = self.png.width * self.png.pixel_size
-
         def paeth():
             abc = [byte_a(), byte_b(), byte_c()]
             p = abc[0] + abc[1] - abc[2]
@@ -79,7 +78,6 @@ class Parser:
         def byte_c():
             return self.reconstructed_image[
                 (i - 1) * scanline + j - self.png.pixel_size] if i > 0 and j >= self.png.pixel_size else 0
-
         n = 0
         for i in range(self.png.height):
             filter_type = data[n]

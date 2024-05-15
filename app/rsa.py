@@ -65,4 +65,7 @@ class RSA:
         for x in ciphertext[original_len:]:
             extended_bytes.append(x)
         ciphertext = ciphertext[:original_len]
+
+        print(original_len, len(ciphertext))
+
         return ciphertext, extended_bytes

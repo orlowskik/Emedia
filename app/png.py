@@ -196,9 +196,8 @@ class PNG:
         slices = len(self.chunks_IDAT)
         cipher, extended = rsa.encrypt_ECB(self.parser.reconstructed_image)
         for i in range(self.height):
-            cipher.insert(i*self.width*self.pixel_size, 0)
+            cipher.insert(i*self.width*self.pixel_size + i, 0)
         compressed = zlib.compress(bytes(cipher))
-
 
         for anc in self.chunks_ancillary.values():
             if not isinstance(anc, list):
@@ -211,6 +210,8 @@ class PNG:
         data = keyword + b'\x00' + bytes(extended)
         # ext_data = tEXt(len(data).to_bytes(4,'big'), b'tEXt', data, secrets.token_bytes(4))
         # chunks.insert(-1, ext_data)
+
+
 
         with open(basedir + filename + '.png', 'wb') as f:
             f.write(self.parser.magic_number)
