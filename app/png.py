@@ -205,9 +205,11 @@ class PNG:
             chunks.insert(-1, txt)
 
         keyword = 'EXTENSION'.encode('utf-8')
-        data = keyword + b'\x00' + bytes(extended)
-        # ext_data = tEXt(len(data).to_bytes(4,'big'), b'tEXt', data, secrets.token_bytes(4))
-        # chunks.insert(-1, ext_data)
+        data_length = self.width * self.height
+        data = keyword + b'\x00' + data_length.to_bytes(4, 'big') + bytes(extended)
+        length = len(data).bit_length() // 8
+        ext_data = tEXt(len(data).to_bytes(length, 'big'), b'tEXt', data, secrets.token_bytes(4))
+        chunks.insert(-1, ext_data)
 
         with open(basedir + filename + '.png', 'wb') as f:
             f.write(self.parser.magic_number)
