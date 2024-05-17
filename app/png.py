@@ -101,7 +101,7 @@ class PNG:
                     palette = plte.create_palette()
                     if trns:
                         size = len(palette) - len(trns.transparency)
-                        trns.transparency.extend([255] * size )
+                        trns.transparency.extend([255] * size)
                         for i in range(len(palette)):
                             palette[i] += (trns.transparency[i],)
                     self.parser.reconstructed_image = [pixel
@@ -175,8 +175,6 @@ class PNG:
                 f.write(chunk.data)
                 f.write(chunk.crc)
 
-
-
     def encrypt_ECB(self, filename, public_key=None, private_key=None):
         basedir = 'crypto/'
 
@@ -196,7 +194,7 @@ class PNG:
         slices = len(self.chunks_IDAT)
         cipher, extended = rsa.encrypt_ECB(self.parser.reconstructed_image)
         for i in range(self.height):
-            cipher.insert(i*self.width*self.pixel_size + i, 0)
+            cipher.insert(i * self.width * self.pixel_size + i, 0)
         compressed = zlib.compress(bytes(cipher))
 
         for anc in self.chunks_ancillary.values():
@@ -211,8 +209,6 @@ class PNG:
         # ext_data = tEXt(len(data).to_bytes(4,'big'), b'tEXt', data, secrets.token_bytes(4))
         # chunks.insert(-1, ext_data)
 
-
-
         with open(basedir + filename + '.png', 'wb') as f:
             f.write(self.parser.magic_number)
             for chunk in chunks:
@@ -220,7 +216,6 @@ class PNG:
                 f.write(chunk.type)
                 f.write(chunk.data)
                 f.write(chunk.crc)
-
 
     def __str__(self):
         return f'PNG file: {self.filename}.'

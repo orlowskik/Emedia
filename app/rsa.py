@@ -1,3 +1,4 @@
+from collections import deque
 from sympy import randprime, isprime, mod_inverse
 from random import randint
 from math import gcd
@@ -12,7 +13,10 @@ class RSA:
         self.public_key = public_key
 
         if self.public_key is not None:
-            self.key_length = public_key[0].bit_length()
+            self.key_length = self.public_key[0].bit_length()
+            self.block_bytes_size = self.key_length // 8 - 1
+        elif self.private_key is not None:
+            self.key_length = self.private_key[0].bit_length()
             self.block_bytes_size = self.key_length // 8 - 1
         else:
             self.key_length = None
@@ -56,8 +60,8 @@ class RSA:
         for i in range(0, original_len, self.block_bytes_size):
             block = bytes(data[i:i + self.block_bytes_size])
             cipher = pow(int.from_bytes(block, 'big'),
-                             self.public_key[1],
-                             self.public_key[0]).to_bytes(self.block_bytes_size + 1, 'big')
+                         self.public_key[1],
+                         self.public_key[0]).to_bytes(self.block_bytes_size + 1, 'big')
 
             for x in range(self.block_bytes_size):
                 ciphertext.append(cipher[x])
@@ -66,6 +70,36 @@ class RSA:
             extended_bytes.append(x)
         ciphertext = ciphertext[:original_len]
 
-        print(original_len, len(ciphertext))
-
         return ciphertext, extended_bytes
+
+    def decrypt_ECB(self, data, extended_bytes, original_data_length):
+        decrypted_data = []
+        prepared_data = self.prepare_decryption_data(data, extended_bytes)
+        for i in range(0, len(prepared_data), self.block_bytes_size + 1):
+            block = bytes(prepared_data[i:i+self.block_bytes_size+1])
+            plaintext = pow(int.from_bytes(block, 'big'), self.private_key[0], self.private_key[1])
+
+            if len(decrypted_data) + self.block_bytes_size > original_data_length:
+                block_length = original_data_length - len(decrypted_data)
+            else:
+                block_length = self.block_bytes_size
+
+            decrypted_data.extend(plaintext.to_bytes(block_length, 'big'))
+            print(decrypted_data)
+        return decrypted_data
+
+    def prepare_decryption_data(self, data, extended_bytes):
+        if self.private_key is None:
+            raise ValueError('Private key required for decrypting .Provide a valid secret key')
+        prepared_data = []
+
+        if extended_bytes is not None:
+            extension = deque(extended_bytes)
+
+            for i in range(0, len(data), self.block_bytes_size):
+                prepared_data.extend(data[i:i + self.block_bytes_size])
+                prepared_data.append(extension.popleft())
+            prepared_data.extend(extension)
+            return prepared_data
+        else:
+            return prepared_data.extend(data)
