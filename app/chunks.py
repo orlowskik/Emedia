@@ -140,8 +140,9 @@ class tEXt(Chunk):
     def __init__(self, length, chunk_type, data, crc):
         super().__init__(length, chunk_type, data, crc)
 
-        self.sep_index = self.data.find(b'0')
-        self.keyword = self.data[:self.sep_index-1].decode('UTF-8')
+        decoded_data = self.data.decode('utf')
+        self.sep_index = decoded_data.find('\x00')
+        self.keyword = self.data[:self.sep_index].decode('UTF-8')
         self.text = self.data[self.sep_index+1:].decode('UTF-8')
 
     def __str__(self):
@@ -154,21 +155,17 @@ class iTXt(Chunk):
         super().__init__(length, chunk_type, data, crc)
 
         decoded_data = self.data.decode('utf')
-        sep_index1 = decoded_data.find('\x00')
-        sep_index2 = decoded_data.find('\x00', sep_index1 + 3)
-        sep_index3 = decoded_data.find('\x00', sep_index2 + 1)
+        self.sep_index1 = decoded_data.find('\x00')
+        self.sep_index2 = decoded_data.find('\x00', self.sep_index1 + 3)
+        self.sep_index3 = decoded_data.find('\x00', self.sep_index2 + 1)
 
-        self.sep_index1 = sep_index1
-        self.sep_index2 = sep_index2
-        self.sep_index3 = sep_index3
+        self.keyword = self.data[:self.sep_index1].decode('UTF-8')
+        self.compression = self.data[self.sep_index1 + 1]
+        self.comp_method = self.data[self.sep_index1 + 2]
+        self.language_tag = self.data[self.sep_index1 + 3:self.sep_index2 - 1].decode('ascii')
+        self.trans_keyword = self.data[self.sep_index2 + 1:self.sep_index3 - 1].decode('utf')
 
-        self.keyword = self.data[:sep_index1].decode('UTF-8')
-        self.compression = self.data[sep_index1 + 1]
-        self.comp_method = self.data[sep_index1 + 2]
-        self.language_tag = self.data[sep_index1 + 3:sep_index2 - 1].decode('ascii')
-        self.trans_keyword = self.data[sep_index2 + 1:sep_index3 - 1].decode('utf')
-
-        self.text = zlib.decompress(self.data[sep_index3 + 1:]) if self.compression else self.data[sep_index3 + 1:]
+        self.text = zlib.decompress(self.data[self.sep_index3 + 1:]) if self.compression else self.data[self.sep_index3 + 1:]
         self.text = self.text.decode('utf')
 
     def __str__(self):
@@ -216,6 +213,7 @@ class tRNS(Chunk):
 
     def show_data(self):
         return self.transparency.__str__()
+
 
 CRITICAL = {
     b'IHDR': IHDR,
