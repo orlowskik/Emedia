@@ -14,6 +14,7 @@ def main():
         if current.chose(option):
             current = crypto if isinstance(current, Menu) else index
             crypto.image = index.image
-
+            continue
+        input('Press Enter to continue...\n')
 if __name__ == "__main__":
     main()

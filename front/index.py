@@ -19,45 +19,47 @@ class Menu:
         return ''
 
     def option_1(self):
-        print("You chose option number 1\n")
+        print("You chose option number 1")
         filename = input("Enter the file name ")
         try:
             self.image = PNG(filename)
+            print("Image loaded successfully")
         except FileNotFoundError:
             print(f"Error: file {filename} not found.")
-            return None if input("Try again? [Y/n] : ") == 'n' else self.option_1()
+            if input("Try again? [Y/n] : ") == 'n': self.option_1()
+
 
     def option_2(self):
         if self.image is not None:
-            print("You chose option number 2\n")
+            print("You chose option number 2")
             self.image.parse()
             self.image.describe()
         else:
-            print("\nYou must load the file first!")
+            print("You must load the file first!")
 
 
     def option_3(self):
         if self.image is not None:
-            print("You chose option number 3\n")
+            print("You chose option number 3")
             self.image.show_image()
         else:
-            print("\nYou must load the file first!")
+            print("You must load the file first!")
 
 
     def option_4(self):
         if self.image is not None:
-            print("You chose option number 4\n")
+            print("You chose option number 4")
             self.image.show_spectrum()
         else:
-            print("\nYou must load the file first!")
+            print("You must load the file first!")
 
 
     def option_5(self):
         if self.image is not None:
-            print("You chose option number 5\n")
+            print("You chose option number 5")
             self.image.show_revert_spectrum()
         else:
-            print("\nYou must load the file first!")
+            print("You must load the file first!")
 
 
     def option_6(self):
@@ -71,9 +73,11 @@ class Menu:
                     slices = 1 if n == '' else int(n)
                     trans = False if t == '' else bool(t)
                     self.image.anonymize(filename, slices, trans)
+                    print('Anonymized file name: ' + filename)
                 except Exception as e:
                     print(f'Error occurred: {e}')
-                    print("File not anonymized due to error. Returning to the menu\n")
+                    print("File not anonymized due to error. Returning to the menu")
+
 
     def chose(self, option):
         match option:

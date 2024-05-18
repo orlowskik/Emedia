@@ -33,6 +33,8 @@ class Crypto:
             public, private = rsa.generate_keys(key_length, common_e, min_e)
             self.public = public
             self.private = private
+            print('Created RSA keys successfully. Search in keys.txt')
+            print(f'Public: {public}\nPrivate: {private}')
         except Exception as e:
             print(e)
 
@@ -49,7 +51,7 @@ class Crypto:
                         break
         if public is None or private is None:
             print(f'One of the keys was unable to be loaded.\nPublic: {public}\nPrivate: {private}\n')
-        print(f'Public: {public}\nPrivate: {private}\n')
+        print(f'Public: {public}\nPrivate: {private}')
         self.public = public
         self.private = private
 
