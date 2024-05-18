@@ -24,7 +24,10 @@ class RSA:
             self.key_length = None
             self.block_bytes_size = None
 
-    def generate_keys(self, size=2048, common_e=True, min_e=None):
+    def generate_keys(self, size=None, common_e=None, min_e=None):
+        common_e = True if common_e is None else common_e
+        size = 2048 if size is None else size
+
         p = q = 1
         prime_size = size // 2
         while p == q or ((n := p * q).bit_length() != size):
