@@ -1,13 +1,16 @@
 import math
 import zlib
 import base64
+import numpy as np
+import secrets
+
+from pathlib import Path
 
 from app.parser import Parser
 from app.fourier import Fourier
 from app.chunks import IDAT, tEXt
 from app.rsa import RSA
-import numpy as np
-import secrets
+
 
 
 class PNG:
@@ -177,14 +180,17 @@ class PNG:
                 f.write(chunk.data)
                 f.write(chunk.crc)
 
-    def encrypt_ECB(self, filename, public_key=None, private_key=None):
+    def encrypt_ECB(self, filename, public_key=None):
         basedir = 'crypto/'
 
         if public_key is None:
             rsa = RSA()
             rsa.generate_keys(common_e=True)
+        elif not isinstance(public_key, int) :
+            public_key = int.from_bytes(base64.b64decode(public_key[0]), 'big'), int.from_bytes(base64.b64decode(public_key[1]), 'big')
+            rsa = RSA(public_key=public_key)
         else:
-            rsa = RSA(public_key, private_key)
+            rsa = RSA(public_key=public_key)
 
         if self.parser is None:
             self.parse()
@@ -206,10 +212,8 @@ class PNG:
         for txt in self.chunks_tEXt:
             chunks.insert(-1, txt)
 
-        keyword = 'EXTENSION'.encode()
-        data_length = self.width * self.height
-
-        data = keyword + b'\x00' + base64.b64encode(data_length.to_bytes(4,'big')) + base64.b64encode(bytes(extended))
+        keyword = b'EXTENSION'
+        data = keyword + b'\x00' + base64.b64encode(bytes(extended))
         ext_data = tEXt(len(data).to_bytes(4, 'big'), b'tEXt', data, secrets.token_bytes(4))
         chunks.insert(-1, ext_data)
 
@@ -220,6 +224,64 @@ class PNG:
                 f.write(chunk.type)
                 f.write(chunk.data)
                 f.write(chunk.crc)
+
+    def decrypt_ECB(self, filename='test_dec', private_key=None):
+        basedir = 'crypto/'
+        extension = None
+        extended_data = None
+
+        if private_key is None:
+            rsa = RSA()
+            rsa.generate_keys(common_e=True)
+        elif not isinstance(private_key, int):
+            private_key = int.from_bytes(base64.b64decode(private_key[0]), 'big'), int.from_bytes(base64.b64decode(private_key[1]), 'big')
+            rsa = RSA(private_key=private_key)
+        else:
+            rsa = RSA(private_key=private_key)
+
+        if self.parser is None:
+            self.parse()
+
+        if not self.processed:
+            self.process_image()
+
+        comments = []
+        for chunk in self.chunks_tEXt:
+            if chunk.keyword == 'EXTENSION':
+                extension = chunk
+            else:
+                comments.append(chunk)
+        if extension is not None:
+            extended_data = base64.b64decode(extension.text)
+
+        original_len = self.height * self.width * self.pixel_size
+
+        decrypted_data = rsa.decrypt_ECB(data=self.parser.reconstructed_image, extended_bytes=extended_data,
+                                         original_data_length=original_len)
+
+        for i in range(self.height):
+            decrypted_data.insert(i * self.width * self.pixel_size + i, 0)
+        compressed = zlib.compress(bytes(decrypted_data))
+
+        chunks = list(self.chunks_critical.values())
+        slices = len(self.chunks_IDAT)
+
+        for anc in self.chunks_ancillary.values():
+            if not isinstance(anc, list):
+                chunks.insert(-1, anc)
+
+        self.resize_data(slices, chunks, compressed)
+        for txt in comments:
+            chunks.insert(-1, txt)
+
+        with open(basedir + filename + '.png', 'wb') as f:
+            f.write(self.parser.magic_number)
+            for chunk in chunks:
+                f.write(chunk.length)
+                f.write(chunk.type)
+                f.write(chunk.data)
+                f.write(chunk.crc)
+
 
     def __str__(self):
         return f'PNG file: {self.filename}.'

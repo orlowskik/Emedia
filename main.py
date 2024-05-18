@@ -1,5 +1,7 @@
-from app.png import PNG
+import base64
 
+from app.png import PNG
+from app.rsa import RSA
 
 def show_menu():
     print("\nChoose an option:")
@@ -9,8 +11,10 @@ def show_menu():
     print("4. Show spectrum after Fourier transform")
     print("5. Inverse Fourier transform")
     print("6. Anonymize image")
-    print("7. Encrypt ECB")
-    print("8. Exit")
+    print("7. Import keys")
+    print("8. Encrypt ECB")
+    print("9. Decrypt ECB")
+    print("10. Exit")
 
 
 def option_1():
@@ -29,6 +33,9 @@ def option_2(x):
         print("You chose option number 2\n")
         x.parse()
         x.describe()
+        x.process_image()
+        with open('test1.txt', 'wb') as f:
+            f.write(base64.b64encode(bytes(x.parser.reconstructed_image)))
     else:
         print("\nYou must load the file first!")
 
@@ -72,17 +79,47 @@ def option_6(x):
                 print(f'Error occurred: {e}')
                 print("File not anonymized due to error. Returning to the menu\n")
 
+def option_7():
+    key_nr = int(input('Enter key pair number from file. Must be natural [-1 for new keys]: '))
+    public, private = None, None
+    if key_nr == -1:
+        rsa = RSA()
+        public, private = rsa.generate_keys()
+    elif key_nr > 0:
+        with open('keys.txt', 'rb') as f:
+            for index, line in enumerate(f):
+                if index == key_nr - 1:
+                    keys = line.split(b'\t')
+                    public = tuple(keys[0].split(b':'))
+                    private = tuple(keys[1].strip(b'\n').split(b':'))
+                    break
+    if public is None or private is None:
+        print(f'One of the keys was unable to be loaded.\nPublic: {public}\nPrivate: {private}\n')
+    print(f'Public: {public}\nPrivate: {private}\n')
+    return public, private
 
-def option_7(x):
-    if x is not None:
-        print("You chose option number 7")
-        # filename = input('Encrypted file name (in ./anonymized folder) without extension: ')
-        # if filename is not None:
-        filename = 'test'
-        x.encrypt_ECB(filename)
+def option_8(x, public):
+    if x is not None and public is not None:
+        print("You chose option number 8")
+        filename = input('Output file name (in ./crypto folder) without extension: ')
+        filename = 'crypto' if filename == '' else filename.split('.')[0]
+        x.encrypt_ECB(filename, public)
+    else:
+        print("You did not choose file or public key")
+
+def option_9(x, private):
+    if x is not None and private is not None:
+        print("You chose option number 9")
+        filename = input('Output file name (in ./crypto folder) without extension: ')
+        filename = 'decrypto' if filename == '' else filename.split('.')[0]
+        x.decrypt_ECB(filename, private)
+    else:
+        print("You did not choose file or private key")
 
 def main():
     x = None
+    private = None
+    public = None
     while True:
         show_menu()
         wybor = input("\nEnter the option number: ")
@@ -100,12 +137,20 @@ def main():
         elif wybor == "6":
             option_6(x)
         elif wybor == "7":
-            option_7(x)
+            public, private = option_7()
         elif wybor == "8":
+            option_8(x, public)
+        elif wybor == "9":
+            option_9(x, private)
+        elif wybor == "0":
+            x = PNG('crypto/short_dice_crypted.png')
+            public, private = option_7()
+            option_9(x, private)
+        elif wybor == "10":
             print("Exiting.")
             break
         else:
-            print("Wrong number. You must choose the number between 1 and 7")
+            print("Wrong number. You must choose the number between 1 and 10")
 
 
 if __name__ == "__main__":

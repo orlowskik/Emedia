@@ -143,7 +143,10 @@ class tEXt(Chunk):
         decoded_data = self.data.decode('utf')
         self.sep_index = decoded_data.find('\x00')
         self.keyword = self.data[:self.sep_index].decode('UTF-8')
-        self.text = self.data[self.sep_index+1:].decode('UTF-8')
+        if self.keyword != 'EXTENSION':
+            self.text = self.data[self.sep_index+1:].decode('UTF-8')
+        else:
+            self.text = self.data[self.sep_index+1:]
 
     def __str__(self):
         return super(tEXt, self).__str__() + f'Keyword: {self.keyword}\nText: {self.text}\n'
