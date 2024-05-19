@@ -1,15 +1,18 @@
 import numpy as np
 import matplotlib.pyplot as plt
-
+from PIL import Image
 
 class Fourier:
     def __init__(self, filename=None):
         try:
-            image_temp = plt.imread(filename)
+            img = Image.open(filename)
+            if img.mode == 'P' and 'transparency' in img.info:
+                img = img.convert('RGBA')
+            img = img.convert('L')
         except FileNotFoundError as e:
             raise FileNotFoundError(f"Error: {e}")
 
-        self.image = image_temp[:, :, :3].mean(axis=2)
+        self.image = np.array(img)
         self.fft_transform = None
         self.fft_shifted = None
         self.magnitude_spectrum = None
