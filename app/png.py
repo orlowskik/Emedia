@@ -209,6 +209,7 @@ class PNG:
 
     def encrypt_ECB(self, filename, public_key=None):
         basedir, rsa = self.init_encryption(public_key)
+        print(len(self.parser.reconstructed_image))
         cipher, extended = rsa.encrypt_ECB(self.parser.reconstructed_image)
 
         keyword = b'EXTENSION'
@@ -221,9 +222,8 @@ class PNG:
         self.create_file(basedir, filename, chunks)
 
     def decrypt_ECB(self, filename, private_key=None):
-        original_len = self.height * self.width * self.pixel_size
-
         basedir, rsa, extension = self.init_decryption(private_key)
+        original_len = self.height * self.width * self.pixel_size
 
         if extension is None:
             raise ValueError('Extension chunk must be specified to decipher. File corrupted')
@@ -236,8 +236,8 @@ class PNG:
         chunks = self.prepare_data(decrypted_data)
         self.create_file(basedir, filename, chunks)
 
-    def encrypt_CBC(self, filename, private_key=None):
-        basedir, rsa = self.init_encryption(private_key)
+    def encrypt_CBC(self, filename, public_key=None):
+        basedir, rsa = self.init_encryption(public_key)
         cipher, extended, init_vector = rsa.encrypt_CBC(self.parser.reconstructed_image)
 
         keyword = b'EXTENSION'
@@ -259,7 +259,6 @@ class PNG:
         text = base64.b64decode(extension.text)
         initial_vector = text[:rsa.block_bytes_size + 1]
         extended_data = text[rsa.block_bytes_size + 1:]
-
 
         decrypted_data = rsa.decrypt_CBC(data=self.parser.reconstructed_image, extended_bytes=extended_data,
                                          original_data_length=original_len, init_vector=initial_vector)

@@ -42,6 +42,7 @@ class Menu:
         if self.image is not None:
             print("You chose option number 3")
             self.image.show_image()
+            self.image.cleanup()
         else:
             print("You must load the file first!")
 

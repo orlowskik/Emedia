@@ -163,15 +163,16 @@ class RSA:
         prepared_data = self.prepare_decryption_data(data, extended_bytes)
 
         init_vector = int.from_bytes(init_vector, 'big')
+
         for i in range(0, len(prepared_data), self.block_bytes_size + 1):
             block = bytes(prepared_data[i:i+self.block_bytes_size+1])
 
             block_xor = pow(int.from_bytes(block, 'big'), self.private_key[1], self.private_key[0])
 
-            if len(decrypted_data) + self.block_bytes_size + 1 > original_data_length:
+            if len(decrypted_data) + self.block_bytes_size > original_data_length:
                 block_length = original_data_length - len(decrypted_data)
             else:
-                block_length = self.block_bytes_size + 1
+                block_length = self.block_bytes_size
 
             init_vector = init_vector.to_bytes(self.block_bytes_size + 1, 'big')
             init_vector = int.from_bytes(init_vector[:block_length], 'big')
@@ -198,21 +199,21 @@ class RSA:
 
 
 
-msg = b'msg'
-
-with open('keys.txt', 'rb') as f:
-    line = f.readline()
-    keys = line.split(b'\t')
-    public = tuple(keys[0].split(b':'))
-    private = tuple(keys[1].strip(b'\n').split(b':'))
-private_key = int.from_bytes(base64.b64decode(private[0]), 'big'), int.from_bytes(
-                base64.b64decode(private[1]), 'big')
-public_key = int.from_bytes(base64.b64decode(public[0]), 'big'), int.from_bytes(
-                base64.b64decode(public[1]), 'big')
-rsa = RSA(private_key=private_key, public_key=public_key)
-
-
-ciphertext, extended_bytes, first_init_vector = rsa.encrypt_CBC(msg)
-print(first_init_vector)
-decrypted = rsa.decrypt_CBC(ciphertext, extended_bytes, 3, first_init_vector)
-print(bytes(decrypted), len(bytes(decrypted)), sep='\t')
+# msg = b'msg'
+#
+# with open('keys.txt', 'rb') as f:
+#     line = f.readline()
+#     keys = line.split(b'\t')
+#     public = tuple(keys[0].split(b':'))
+#     private = tuple(keys[1].strip(b'\n').split(b':'))
+# private_key = int.from_bytes(base64.b64decode(private[0]), 'big'), int.from_bytes(
+#                 base64.b64decode(private[1]), 'big')
+# public_key = int.from_bytes(base64.b64decode(public[0]), 'big'), int.from_bytes(
+#                 base64.b64decode(public[1]), 'big')
+# rsa = RSA(private_key=private_key, public_key=public_key)
+#
+#
+# ciphertext, extended_bytes, first_init_vector = rsa.encrypt_CBC(msg)
+# print(first_init_vector)
+# decrypted = rsa.decrypt_CBC(ciphertext, extended_bytes, len(msg), first_init_vector)
+# print(bytes(decrypted), len(bytes(decrypted)), len(msg), sep='\t')
