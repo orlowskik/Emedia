@@ -16,7 +16,8 @@ class Crypto:
         print("4. Decrypt ECB")
         print("5. Encrypt CBC")
         print("6. Decrypt CBC")
-        print("7. Back to menu")
+        print("7. Library encryption RSA")
+        print("8. Back to menu")
         print("Write 'exit' to end program")
 
         return ''
@@ -109,6 +110,18 @@ class Crypto:
         else:
           print("You did not choose file or private key")
 
+    def option_7(self):
+        if self.image is not None and self.public is not None:
+            try:
+                filename = input('Output file name (in ./crypto folder) without extension: ')
+                filename = 'library_rsa' if filename == '' else filename.split('.')[0]
+                self.image.library_encryption_RSA(filename, self.public)
+                print('Encrypted file')
+            except Exception as e:
+                print(e)
+        else:
+            print("You did not choose file or public key")
+
     def chose(self, option):
         match option:
             case '1':
@@ -129,6 +142,9 @@ class Crypto:
             case '6':
                 self.option_6()
             case '7':
+                self.option_7()
+                return False
+            case '8':
                 return True
             case _:
                 print('Unknown function\n')
