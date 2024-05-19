@@ -3,10 +3,11 @@ import base64
 
 class Menu:
     def __init__(self):
-        self.image = None
+        self.image = PNG()
 
     def __str__(self):
         print("\nChoose an option:")
+        print(self.image)
         print("1. Load an image")
         print("2. Show details about the image")
         print("3. Show image")
@@ -22,12 +23,11 @@ class Menu:
         print("You chose option number 1")
         filename = input("Enter the file name ")
         try:
-            self.image = PNG(filename)
+            self.image.load_file(filename)
             print("Image loaded successfully")
         except FileNotFoundError:
             print(f"Error: file {filename} not found.")
-            if input("Try again? [Y/n] : ") == 'n': self.option_1()
-
+            if input("Try again? [Y/n] : ") == 'Y': self.option_1()
 
     def option_2(self):
         if self.image is not None:

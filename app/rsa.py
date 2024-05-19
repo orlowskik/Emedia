@@ -6,7 +6,7 @@ from pathlib import Path
 import base64
 import numpy as np
 import time
-
+import secrets
 
 class RSA:
 
@@ -87,9 +87,8 @@ class RSA:
         original_len = len(data)
         ciphertext = []
         extended_bytes = []
-        n = 0
+
         for i in range(0, original_len, self.block_bytes_size):
-            n += 1
             block = bytes(data[i:i + self.block_bytes_size])
             cipher = pow(int.from_bytes(block, 'big'),
                          self.public_key[1],
@@ -97,13 +96,11 @@ class RSA:
             for x in range(self.block_bytes_size):
                 ciphertext.append(cipher[x])
             extended_bytes.append(cipher[-1])
-        print(len(extended_bytes), n, sep='\t')
         ciphertext.append(extended_bytes.pop())
-        print(len(extended_bytes))
+
         for x in ciphertext[original_len:]:
             extended_bytes.append(x)
         ciphertext = ciphertext[:original_len]
-        print(len(extended_bytes))
         return ciphertext, extended_bytes
 
     def decrypt_ECB(self, data, extended_bytes, original_data_length):
@@ -111,8 +108,6 @@ class RSA:
         if self.private_key is None:
             raise ValueError("Private key cannot be empty")
         decrypted_data = []
-        print(original_data_length)
-        print(len(extended_bytes))
         prepared_data = self.prepare_decryption_data(data, extended_bytes)
         for i in range(0, len(prepared_data), self.block_bytes_size + 1):
             block = bytes(prepared_data[i:i+self.block_bytes_size+1])
@@ -125,16 +120,73 @@ class RSA:
             decrypted_data.extend(plaintext[-block_length:])
         return decrypted_data
 
+    def encrypt_CBC(self, data):
+        if self.public_key is None:
+            raise ValueError("Public key cannot be empty")
+        original_len = len(data)
+        ciphertext = []
+        extended_bytes = []
+
+
+        first_init_vector = secrets.randbits(self.key_length)
+        init_vector = first_init_vector
+
+        for i in range(0, original_len, self.block_bytes_size):
+            block = bytes(data[i:i + self.block_bytes_size])
+
+            init_vector = init_vector.to_bytes(self.block_bytes_size + 1, 'big')
+            init_vector = int.from_bytes(init_vector[:len(block)], 'big')
+            block_xor = int.from_bytes(block, 'big') ^ init_vector
+
+            cipher = pow(block_xor,
+                         self.public_key[1],
+                         self.public_key[0])
+            init_vector = cipher
+
+            cipher = cipher.to_bytes(self.block_bytes_size + 1, 'big')
+            for x in range(self.block_bytes_size):
+                ciphertext.append(cipher[x])
+            extended_bytes.append(cipher[-1])
+        ciphertext.append(extended_bytes.pop())
+
+        for x in ciphertext[original_len:]:
+            extended_bytes.append(x)
+        ciphertext = ciphertext[:original_len]
+
+        return ciphertext, extended_bytes, first_init_vector.to_bytes(self.block_bytes_size + 1, 'big')
+
+    def decrypt_CBC(self, data, extended_bytes, original_data_length, init_vector):
+        print('Starting decrypting...')
+        if self.private_key is None:
+            raise ValueError("Private key cannot be empty")
+        decrypted_data = []
+        prepared_data = self.prepare_decryption_data(data, extended_bytes)
+
+        init_vector = int.from_bytes(init_vector, 'big')
+        for i in range(0, len(prepared_data), self.block_bytes_size + 1):
+            block = bytes(prepared_data[i:i+self.block_bytes_size+1])
+
+            block_xor = pow(int.from_bytes(block, 'big'), self.private_key[1], self.private_key[0])
+
+            if len(decrypted_data) + self.block_bytes_size + 1 > original_data_length:
+                block_length = original_data_length - len(decrypted_data)
+            else:
+                block_length = self.block_bytes_size + 1
+
+            init_vector = init_vector.to_bytes(self.block_bytes_size + 1, 'big')
+            init_vector = int.from_bytes(init_vector[:block_length], 'big')
+            plaintext = (init_vector ^ block_xor).to_bytes(self.block_bytes_size + 1, 'big')
+            init_vector = int.from_bytes(block, 'big')
+
+            decrypted_data.extend(plaintext[-block_length:])
+        return decrypted_data
+
     def prepare_decryption_data(self, data, extended_bytes):
         if self.private_key is None:
             raise ValueError('Private key required for decrypting .Provide a valid secret key')
         prepared_data = []
         if extended_bytes is not None:
             extension = deque(extended_bytes)
-            print(len(extension))
-            print(len(data))
-            print(self.block_bytes_size)
-            print(len(data) / self.block_bytes_size)
             for i in range(0, len(data), self.block_bytes_size):
                 prepared_data.extend(data[i:i + self.block_bytes_size])
                 prepared_data.append(extension.popleft())
@@ -143,3 +195,24 @@ class RSA:
         else:
             prepared_data.extend(data)
             return prepared_data
+
+
+
+msg = b'msg'
+
+with open('keys.txt', 'rb') as f:
+    line = f.readline()
+    keys = line.split(b'\t')
+    public = tuple(keys[0].split(b':'))
+    private = tuple(keys[1].strip(b'\n').split(b':'))
+private_key = int.from_bytes(base64.b64decode(private[0]), 'big'), int.from_bytes(
+                base64.b64decode(private[1]), 'big')
+public_key = int.from_bytes(base64.b64decode(public[0]), 'big'), int.from_bytes(
+                base64.b64decode(public[1]), 'big')
+rsa = RSA(private_key=private_key, public_key=public_key)
+
+
+ciphertext, extended_bytes, first_init_vector = rsa.encrypt_CBC(msg)
+print(first_init_vector)
+decrypted = rsa.decrypt_CBC(ciphertext, extended_bytes, 3, first_init_vector)
+print(bytes(decrypted), len(bytes(decrypted)), sep='\t')
