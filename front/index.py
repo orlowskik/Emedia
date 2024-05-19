@@ -30,35 +30,44 @@ class Menu:
             if input("Try again? [Y/n] : ") == 'Y': self.option_1()
 
     def option_2(self):
+
         if self.image is not None:
-            print("You chose option number 2")
-            self.image.parse()
-            self.image.describe()
+            try:
+                self.image.parse()
+                self.image.describe()
+            except Exception as e:
+                print(f"Error: {e}")
         else:
             print("You must load the file first!")
 
 
     def option_3(self):
         if self.image is not None:
-            print("You chose option number 3")
-            self.image.show_image()
-            self.image.cleanup()
+            try:
+                self.image.show_image()
+                self.image.cleanup()
+            except Exception as e:
+                print(f"Error: {e}")
         else:
             print("You must load the file first!")
 
 
     def option_4(self):
         if self.image is not None:
-            print("You chose option number 4")
-            self.image.show_spectrum()
+            try:
+                self.image.show_spectrum()
+            except Exception as e:
+                print(f"Error: {e}")
         else:
             print("You must load the file first!")
 
 
     def option_5(self):
         if self.image is not None:
-            print("You chose option number 5")
-            self.image.show_revert_spectrum()
+            try:
+                self.image.show_revert_spectrum()
+            except Exception as e:
+                print(f"Error: {e}")
         else:
             print("You must load the file first!")
 

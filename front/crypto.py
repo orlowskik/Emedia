@@ -43,14 +43,18 @@ class Crypto:
     def option_2(self):
         key_nr = int(input('Enter key pair number from file. Must be natural: '))
         public, private = None, None
-        if key_nr > 0:
-            with open('keys.txt', 'rb') as f:
-                for index, line in enumerate(f):
-                    if index == key_nr - 1:
-                        keys = line.split(b'\t')
-                        public = tuple(keys[0].split(b':'))
-                        private = tuple(keys[1].strip(b'\n').split(b':'))
-                        break
+        try:
+            if key_nr > 0:
+
+                with open('keys.txt', 'rb') as f:
+                    for index, line in enumerate(f):
+                        if index == key_nr - 1:
+                            keys = line.split(b'\t')
+                            public = tuple(keys[0].split(b':'))
+                            private = tuple(keys[1].strip(b'\n').split(b':'))
+                            break
+        except Exception as e:
+            print(e)
         if public is None or private is None:
             print(f'One of the keys was unable to be loaded.\nPublic: {public}\nPrivate: {private}\n')
         print(f'Public: {public}\nPrivate: {private}')
@@ -59,37 +63,49 @@ class Crypto:
 
     def option_3(self):
         if self.image is not None and self.public is not None:
-            filename = input('Output file name (in ./crypto folder) without extension: ')
-            filename = 'crypt_ecb' if filename == '' else filename.split('.')[0]
-            self.image.encrypt_ECB(filename, self.public)
-            print('Encrypted file')
+            try:
+                filename = input('Output file name (in ./crypto folder) without extension: ')
+                filename = 'crypt_ecb' if filename == '' else filename.split('.')[0]
+                self.image.encrypt_ECB(filename, self.public)
+                print('Encrypted file')
+            except Exception as e:
+                print(e)
         else:
             print("You did not choose file or public key")
 
     def option_4(self):
         if self.image is not None and self.private is not None:
-            filename = input('Output file name (in ./crypto folder) without extension: ')
-            filename = 'decrypt_ecb' if filename == '' else filename.split('.')[0]
-            self.image.decrypt_ECB(filename, self.private)
-            print('Decrypted file')
+            try:
+                filename = input('Output file name (in ./crypto folder) without extension: ')
+                filename = 'decrypt_ecb' if filename == '' else filename.split('.')[0]
+                self.image.decrypt_ECB(filename, self.private)
+                print('Decrypted file')
+            except Exception as e:
+                print(e)
         else:
           print("You did not choose file or private key")
 
     def option_5(self):
         if self.image is not None and self.public is not None:
-            filename = input('Output file name (in ./crypto folder) without extension: ')
-            filename = 'crypt_cbc' if filename == '' else filename.split('.')[0]
-            self.image.encrypt_CBC(filename, self.public)
-            print('Encrypted file')
+            try:
+                filename = input('Output file name (in ./crypto folder) without extension: ')
+                filename = 'crypt_cbc' if filename == '' else filename.split('.')[0]
+                self.image.encrypt_CBC(filename, self.public)
+                print('Encrypted file')
+            except Exception as e:
+                print(e)
         else:
             print("You did not choose file or public key")
 
     def option_6(self):
         if self.image is not None and self.private is not None:
-            filename = input('Output file name (in ./crypto folder) without extension: ')
-            filename = 'decrypt_cbc' if filename == '' else filename.split('.')[0]
-            self.image.decrypt_CBC(filename, self.private)
-            print('Decrypted file')
+            try:
+                filename = input('Output file name (in ./crypto folder) without extension: ')
+                filename = 'decrypt_cbc' if filename == '' else filename.split('.')[0]
+                self.image.decrypt_CBC(filename, self.private)
+                print('Decrypted file')
+            except Exception as e:
+                print(e)
         else:
           print("You did not choose file or private key")
 
