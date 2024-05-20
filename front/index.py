@@ -78,10 +78,11 @@ class Menu:
             filename = input('Anonymized file name (in ./anonymized folder) without extension: ')
             if filename is not None:
                 try:
+                    self.image.cleanup()
                     n = input('How many IDAT files should be considered? (default: 1) ')
                     t = input('Preserve transparency if tRNS present? (default: False) [0 - False, 1 - True] ')
                     slices = 1 if n == '' else int(n)
-                    trans = False if t == '' else bool(t)
+                    trans = True if t == '1' else False
                     self.image.anonymize(filename, slices, trans)
                     print('Anonymized file name: ' + filename)
                 except Exception as e:
