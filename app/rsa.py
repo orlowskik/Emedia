@@ -7,6 +7,7 @@ import base64
 import numpy as np
 import time
 import secrets
+import rsa
 
 class RSA:
 
@@ -181,7 +182,22 @@ class RSA:
 
             decrypted_data.extend(plaintext[-block_length:])
         return decrypted_data
-
+    
+    def library_encryption_RSA(self, data):
+        encrypted_data = []
+        public_key = rsa.PublicKey(*self.public_key)
+        print(public_key)
+        print(self.public_key)
+        key_size = rsa.common.byte_size(public_key.n)
+        chunk_size = key_size - 11
+        for i in range(0, len(data), chunk_size):
+            chunk = bytes(data[i:i + chunk_size])
+            encrypted_chunk = rsa.encrypt(chunk, public_key)
+            for x in range(chunk_size):
+                encrypted_data.append(encrypted_chunk[x])
+                
+        return encrypted_data
+    
     def prepare_decryption_data(self, data, extended_bytes):
         if self.private_key is None:
             raise ValueError('Private key required for decrypting .Provide a valid secret key')

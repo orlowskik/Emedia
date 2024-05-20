@@ -207,6 +207,12 @@ class PNG:
                 f.write(chunk.data)
                 f.write(chunk.crc)
 
+    def library_encryption_RSA(self, filename, public_key=None):
+        basedir, rsa = self.init_encryption(public_key)
+        encrypted_data = rsa.library_encryption_RSA(self.parser.reconstructed_image)
+        chunks = self.prepare_data(encrypted_data)
+        self.create_file(basedir, filename, chunks)
+
     def encrypt_ECB(self, filename, public_key=None):
         basedir, rsa = self.init_encryption(public_key)
         print(len(self.parser.reconstructed_image))
