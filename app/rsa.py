@@ -185,9 +185,8 @@ class RSA:
     
     def library_encryption_RSA(self, data):
         encrypted_data = []
+
         public_key = rsa.PublicKey(*self.public_key)
-        print(public_key)
-        print(self.public_key)
         key_size = rsa.common.byte_size(public_key.n)
         chunk_size = key_size - 11
         for i in range(0, len(data), chunk_size):
