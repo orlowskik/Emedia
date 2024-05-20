@@ -215,7 +215,6 @@ class PNG:
 
     def encrypt_ECB(self, filename, public_key=None):
         basedir, rsa = self.init_encryption(public_key)
-        print(len(self.parser.reconstructed_image))
         cipher, extended = rsa.encrypt_ECB(self.parser.reconstructed_image)
 
         keyword = b'EXTENSION'
@@ -277,8 +276,11 @@ class PNG:
 
         if public_key is None:
             rsa = RSA()
-            rsa.generate_keys(common_e=True)
-        elif not isinstance(public_key, int):
+            public_key, _ = rsa.generate_keys(common_e=True)
+            public_key = int.from_bytes(base64.b64decode(public_key[0]), 'big'), int.from_bytes(
+                base64.b64decode(public_key[1]), 'big')
+            rsa = RSA(public_key=public_key)
+        elif not isinstance(public_key[0], int):
             public_key = int.from_bytes(base64.b64decode(public_key[0]), 'big'), int.from_bytes(
                 base64.b64decode(public_key[1]), 'big')
             rsa = RSA(public_key=public_key)
@@ -299,7 +301,7 @@ class PNG:
 
         if private_key is None:
             raise ValueError('Private key must be specified')
-        if not isinstance(private_key, int):
+        if not isinstance(private_key[0], int):
             private_key = int.from_bytes(base64.b64decode(private_key[0]), 'big'), int.from_bytes(
                 base64.b64decode(private_key[1]), 'big')
             rsa = RSA(private_key=private_key)
