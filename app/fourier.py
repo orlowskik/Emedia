@@ -21,13 +21,16 @@ class Fourier:
         self.fft_transform = np.fft.fft2(self.image)
         self.fft_shifted = np.fft.fftshift(self.fft_transform)
         self.magnitude_spectrum = np.log(np.abs(self.fft_shifted))
+        self.phase_spectrum = np.angle(self.fft_shifted)
 
     def show(self):
         try:
-            plt.subplot(1, 2, 1), plt.imshow(self.image, cmap='gray')
+            plt.subplot(1, 3, 1), plt.imshow(self.image, cmap='gray')
             plt.title('Original image'), plt.xticks([]), plt.yticks([])
-            plt.subplot(1, 2, 2), plt.imshow(self.magnitude_spectrum, cmap='gray')
+            plt.subplot(1, 3, 2), plt.imshow(self.magnitude_spectrum, cmap='gray')
             plt.title('Image spectrum'), plt.xticks([]), plt.yticks([])
+            plt.subplot(1, 3, 3), plt.imshow(self.phase_spectrum, cmap='gray')
+            plt.title('Phase spectrum'), plt.xticks([]), plt.yticks([])
             plt.show()
         except AttributeError:
             raise ValueError(f'Error using function: magnitude_spectrum has no value')
