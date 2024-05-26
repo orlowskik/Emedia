@@ -209,7 +209,6 @@ class PNG:
 
     def encrypt_ECB(self, filename, public_key=None):
         basedir, rsa = self.init_encryption(public_key)
-        print(len(self.parser.reconstructed_image))
         cipher, extended = rsa.encrypt_ECB(self.parser.reconstructed_image)
 
         keyword = b'EXTENSION'
@@ -264,6 +263,33 @@ class PNG:
                                          original_data_length=original_len, init_vector=initial_vector)
 
         chunks = self.prepare_data(decrypted_data)
+        self.create_file(basedir, filename, chunks)
+
+    def encrypt_post_compression(self, filename, public_key=None):
+        basedir, rsa = self.init_encryption(public_key)
+
+        data = b''.join(chunk.data for chunk in self.chunks_IDAT)
+        cipher, extended = rsa.encrypt_ECB(bytes(data))
+
+
+
+        keyword = b'EXTENSION'
+        data = keyword + b'\x00' + base64.b64encode(bytes(extended))
+        ext_data = tEXt(len(data).to_bytes(4, 'big'), b'tEXt', data, secrets.token_bytes(4))
+
+        chunks = list(self.chunks_critical.values())
+        slices = len(self.chunks_IDAT)
+
+        for anc in self.chunks_ancillary.values():
+            if not isinstance(anc, list):
+                chunks.insert(-1, anc)
+
+        self.resize_data(slices, chunks, bytes(cipher))
+        for txt in self.chunks_tEXt:
+            if txt.keyword != 'EXTENSION':
+                chunks.insert(-1, txt)
+
+        chunks.insert(-1, ext_data)
         self.create_file(basedir, filename, chunks)
 
     def init_encryption(self, public_key=None):
